@@ -1,7 +1,4 @@
-USE [CollectStateLedger];
-GO
-
-IF OBJECT_ID('CollectReturnStatus', 'U') IS NULL
+IF OBJECT_ID('CollectStateLedger.dbo.CollectReturnStatus', 'U') IS NULL
 BEGIN
 CREATE TABLE  CollectStateLedger.dbo.CollectReturnStatus
 (
