@@ -3,7 +3,7 @@ GO
 
 IF OBJECT_ID('CollectReturnStatus', 'U') IS NULL
 BEGIN
-CREATE TABLE [CollectReturnStatus]
+CREATE TABLE  CollectStateLedger.dbo.CollectReturnStatus
 (
     [Id]                    [int] IDENTITY(1,1) PRIMARY KEY,
     [SchoolName]            [nvarchar] (250)  NOT NULL,
