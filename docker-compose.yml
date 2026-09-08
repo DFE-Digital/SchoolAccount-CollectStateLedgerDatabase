@@ -1,0 +1,12 @@
+services:
+  sqlserver-init-db:
+    image: mcr.microsoft.com/mssql-tools:latest
+    platform: linux/amd64
+    environment:
+      - MSSQL_USER=${MSSQL_USER-sa}
+      - MSSQL_PASSWORD=${MSSQL_PASSWORD-MyStrongPassword123!}
+    command: /scripts/configure-db.sh
+    volumes:
+      - ./sql:/sql
+      - ./scripts:/scripts
+    restart: "no"      
