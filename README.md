@@ -14,7 +14,7 @@ A SQL script [sql/tables](./sql/tables.sql) is provided to create the table requ
 The table `CollectReturnStatus` follows the existing COLLECT database conventions and contains only information that can be obtained directly from the iStore `COLLECTPortal` database:
 
 
-| Column Name.     | Type          | Description                   |
+| Column Name      | Type          | Description                   |
 |------------------|---------------|-------------------------------|
 | Id               | int           | Auto-incrementing primary key |
 | SchoolName       | nvarchar(250) | Name of school                |
