@@ -116,7 +116,7 @@ SELECT [SchoolName]
       ,[UpdatedAt]
       ,[Collection]
       ,[DCID]
-  FROM [CollectStateLedger].[dbo].[CollectReturnStatus]
-where LAEStab = @LAEStab and [Collection] = @CensusName
-order by UpdatedAt desc
+FROM [CollectStateLedger].[dbo].[CollectReturnStatus]
+WHERE LAEStab = @LAEStab AND [Collection] = @CensusName
+ORDER BY UpdatedAt DESC
 ```
