@@ -63,7 +63,9 @@ docker compose up
 
 # Further Information
 
-The stored procedure has been thoroughly tested by simulating updates in a local copy of the portal database and verifying changes are detected.
+A [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) project is available that allows a developer to run a local copy of the `COLLECTPortal` database from a backup.
+
+The stored procedure has been thoroughly tested using the above by simulating updates in a local copy of the database and verifying changes are detected.
 
 The following SQL may be used to manually update a row in the Portal Database for testing purposes.
 
