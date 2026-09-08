@@ -100,7 +100,7 @@ WHERE o.OrganisationNativeID = @Laestab
 AND dc.DCBladeSQLDatabase = @CensusName
 ```
 
-The following query will return the current and previous status for a particular LAEStab and Collection:
+The following query will return the ledger records, including current and previous status for a particular LAEStab and Collection:
 ```sql
 DECLARE @LAEStab [nvarchar] (50) = '8612009'
 DECLARE @CensusName [nvarchar] (128) = 'SchoolCensus2025_Spring'
@@ -118,4 +118,5 @@ SELECT [SchoolName]
       ,[DCID]
   FROM [CollectStateLedger].[dbo].[CollectReturnStatus]
 where LAEStab = @LAEStab and [Collection] = @CensusName
+order by UpdatedAt desc
 ```
