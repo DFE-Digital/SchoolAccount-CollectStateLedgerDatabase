@@ -11,7 +11,7 @@ For working locally a [sql/database.sql](./sql/database.sql) script is available
 A SQL script [sql/tables](./sql/tables.sql) is provided to create the table required by the stored procedure to track changes.
 [sql/stored-procedures](./sql/stored-procedures.sql) creates the stored procedure itself.
 
-The table `CollectReturnStatus` follows the existing COLLECT database conventions and contains only information that can be obtained directly from the iStore Portal database:
+The table `CollectReturnStatus` follows the existing COLLECT database conventions and contains only information that can be obtained directly from the iStore `COLLECTPortal` database:
 
 
 | Column Name.     | Type          | Description                   |
@@ -118,5 +118,4 @@ SELECT [SchoolName]
       ,[DCID]
   FROM [CollectStateLedger].[dbo].[CollectReturnStatus]
 where LAEStab = @LAEStab and [Collection] = @CensusName
-order by UpdatedAt desc
 ```
