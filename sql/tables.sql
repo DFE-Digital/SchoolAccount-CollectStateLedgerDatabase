@@ -19,3 +19,27 @@ CREATE TABLE  CollectStateLedger.dbo.CollectReturnStatus
 END
 
 GO
+
+IF OBJECT_ID('CollectStateLedger.dbo.RegisteredUsers', 'U') IS NULL
+BEGIN
+CREATE TABLE  CollectStateLedger.dbo.RegisteredUsers
+(
+    [Id]                    [int] IDENTITY(1,1) PRIMARY KEY,
+    [LAEStab]               [nvarchar] (50) NOT NULL,
+    [Email]                 [nvarchar] (250) NOT NULL
+);
+END
+
+GO
+
+IF OBJECT_ID('CollectStateLedger.dbo.JobStatus', 'U') IS NULL
+BEGIN
+CREATE TABLE  CollectStateLedger.dbo.JobStatus
+(
+    [Id]                    [int] IDENTITY(1,1) PRIMARY KEY,
+    [Name]                  [nvarchar] (50) NOT NULL,
+    [LastRun]               [datetime]  NULL
+);
+END
+
+GO
