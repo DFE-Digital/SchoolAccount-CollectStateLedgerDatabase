@@ -1,17 +1,23 @@
 # SchoolAccount-CollectStateLedgerDatabase
 
-This repository contains migration scripts and a stored procedure to track COLLECT data return status changes in the `CollectStateLedger` database.
+This repository contains migration scripts and a stored procedure to track COLLECT data return
+status changes in the `CollectStateLedger` database.
 
 # Database and Schema
 
-The database `CollectStateLedger` should be available alongside the `COLLECTPortal` database in iStore.
+The database `CollectStateLedger` should be available alongside the `COLLECTPortal` database in
+iStore.
 
-For working locally a [sql/database.sql](./sql/database.sql) script is available to create a suitable database. Note that the script sets the database collation as `Latin1_General_CI_AS` to ensure cross database joins are using the same character set.
+For working locally a [sql/database.sql](./sql/database.sql) script is available to create a
+suitable database. Note that the script sets the database collation as `Latin1_General_CI_AS` to
+ensure cross database joins are using the same character set.
 
-A SQL script [sql/tables](./sql/tables.sql) is provided to create the table required by the stored procedure to track changes.
-[sql/stored-procedures](./sql/stored-procedures.sql) creates the stored procedure itself.
+A SQL script [sql/tables](./sql/tables.sql) is provided to create the table required by the stored
+procedure to track changes. [sql/stored-procedures](./sql/stored-procedures.sql) creates the stored
+procedure itself.
 
-The table `CollectReturnStatus` follows the existing COLLECT database conventions and contains only information that can be obtained directly from the iStore `COLLECTPortal` database:
+The table `CollectReturnStatus` follows the existing COLLECT database conventions and contains only
+information that can be obtained directly from the iStore `COLLECTPortal` database:
 
 
 | Column Name      | Type          | Description                   |
@@ -30,17 +36,22 @@ The table `CollectReturnStatus` follows the existing COLLECT database convention
 | DataReturnId     | int           | ID of DataReturn row          |
 
 
-The organisation is identified by the `LAEStab`, as the `UKPRN` is not available within the COLLECT Portal.
+The organisation is identified by the `LAEStab`, as the `UKPRN` is not available within the COLLECT
+Portal.
 
 The `Hash` is used to compare current and previous state in the stored procedure.
 
-The Portal convention of using an identity primary key is used in preference to a [SEQUENCE](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-sequence-transact-sql?view=sql-server-ver17).
+The Portal convention of using an identity primary key is used in preference to a
+[SEQUENCE](https://learn.microsoft.com/en-us/sql/t-sql/statements/create-sequence-transact-sql?view=sql-server-ver17).
 
-Although only the `LAEStab`, `ReturnStatus`, `DCID`, `Errors`, `Queries`, `OKdErrorsQueries`, `Hash`, and `UpdatedAt` are essential for tracking state, other columns are provided to simplify use by the consuming service.
+Although only the `LAEStab`, `ReturnStatus`, `DCID`, `Errors`, `Queries`, `OKdErrorsQueries`,
+`Hash`, and `UpdatedAt` are essential for tracking state, other columns are provided to simplify use
+by the consuming service.
 
 At present there are no additional indexes on the table to improve performance.
 
-The following SQL demonstrates running the stored procedure `AddChangedCollectReturnStatus` against the `SchoolCensus2025_Spring` collection:
+The following SQL demonstrates running the stored procedure `AddChangedCollectReturnStatus` against
+the `SchoolCensus2025_Spring` collection:
 ```sql
 DECLARE @RC int 
 EXECUTE @RC = [dbo].[AddChangedCollectReturnStatus] 'SchoolCensus2025_Spring'
@@ -51,21 +62,29 @@ When running locally this updates 22,000 rows in 0.35 seconds.
 
 ## Running the ledger on its own
 
-[docker-compose.yml](./docker-compose.yml) builds an image of SQL Server with the schema already applied and brings it up:
+[docker-compose.yml](./docker-compose.yml) builds an image of SQL Server with the schema already
+applied and brings it up:
 ```
 docker compose up --build --wait
 ```
 
 It publishes on port `14330` rather than `1433`, so it does not collide with the SQL Server that
-[SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) runs. Override it with `LEDGER_DATABASE_PORT`.
+[SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) runs.
+Override it with `LEDGER_DATABASE_PORT`.
 
-The image contains no `COLLECTPortal`, so the stored procedure is created but has nothing to read. This is for consumers that only read the ledger, and it is what the build workflow publishes to GHCR.
+The image contains no `COLLECTPortal`, so the stored procedure is created but has nothing to read.
+This is for consumers that only read the ledger, and it is what the build workflow publishes to
+GHCR.
 
 ## Applying the scripts to a server you already have
 
-[docker-compose.apply.yml](./docker-compose.apply.yml) runs the migrations against a database that is already running on the standard SQL server port of `1433`. That is the one to use alongside `COLLECTPortal`, since it is the only setup where the stored procedure can actually run.
+[docker-compose.apply.yml](./docker-compose.apply.yml) runs the migrations against a database that
+is already running on the standard SQL server port of `1433`. That is the one to use alongside
+`COLLECTPortal`, since it is the only setup where the stored procedure can actually run.
 
-The default SQL user and password are set to the standard School Account development SQL credentials. These may be overridden by adding a `.env` file to the project root with the following contents, substituting `db-user` and `my-db-password` with the required values:
+The default SQL user and password are set to the standard School Account development SQL
+credentials. These may be overridden by adding a `.env` file to the project root with the following
+contents, substituting `db-user` and `my-db-password` with the required values:
 ```
 MSSQL_USER=my-db-user
 MSSQL_PASSWORD=my-db-password
@@ -78,13 +97,17 @@ docker compose -f docker-compose.apply.yml up
 
 # Further Information
 
-A [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) project is available that allows a developer to run a local copy of the `COLLECTPortal` database from a backup.
+A [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) project
+is available that allows a developer to run a local copy of the `COLLECTPortal` database from a
+backup.
 
-The stored procedure has been thoroughly tested using the above by simulating updates in a local copy of the database and verifying changes are detected.
+The stored procedure has been thoroughly tested using the above by simulating updates in a local
+copy of the database and verifying changes are detected.
 
 The following SQL may be used to manually update a row in the Portal Database for testing purposes.
 
- This example updates the status and counts for LAEstab `8162009` and collection `SchoolCensus2025_Spring`.
+This example updates the status and counts for LAEstab `8162009` and collection
+`SchoolCensus2025_Spring`.
 
 ```sql
 DECLARE @LAEStab [nvarchar] (50) = '8612009'
@@ -115,7 +138,8 @@ WHERE o.OrganisationNativeID = @Laestab
 AND dc.DCBladeSQLDatabase = @CensusName
 ```
 
-The following query will return the ledger records, including current and previous status for a particular LAEStab and Collection:
+The following query will return the ledger records, including current and previous status for a
+particular LAEStab and Collection:
 ```sql
 DECLARE @LAEStab [nvarchar] (50) = '8612009'
 DECLARE @CensusName [nvarchar] (128) = 'SchoolCensus2025_Spring'
