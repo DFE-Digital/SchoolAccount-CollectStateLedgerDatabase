@@ -1,0 +1,107 @@
+name: Ledger Database Build and Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  MAIN_BRANCH: refs/heads/main
+  IMAGE_NAME: ghcr.io/dfe-digital/schoolaccount-collectstateledgerdatabase
+  LOCAL_TAG: ledger-database:ci
+  SA_PASSWORD: "MyStrongPassword123!"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == env.MAIN_BRANCH }}
+            type=ref,event=branch
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          push: false
+          tags: ${{ env.LOCAL_TAG }}
+
+      - name: Start the image
+        run: |
+          docker run --detach --name ledger-database \
+            --publish 1433:1433 \
+            --env MSSQL_SA_PASSWORD="${{ env.SA_PASSWORD }}" \
+            ${{ env.LOCAL_TAG }}
+
+      - name: Wait for the schema to be applied
+        run: |
+          for attempt in $(seq 1 60); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' ledger-database)
+            case "$status" in
+              healthy) echo "Ready after $((attempt * 5))s"; exit 0 ;;
+              unhealthy) docker logs ledger-database; echo "Container reported unhealthy" >&2; exit 1 ;;
+            esac
+            sleep 5
+          done
+          docker logs ledger-database
+          echo "Container did not become healthy within 300s" >&2
+          exit 1
+
+      - name: Check the expected objects exist
+        run: |
+          missing=$(docker exec ledger-database /opt/mssql-tools18/bin/sqlcmd \
+            -C -b -h -1 -W -S localhost -U sa -P "${{ env.SA_PASSWORD }}" -d CollectStateLedger \
+            -Q "SET NOCOUNT ON;
+                SELECT name FROM (VALUES ('CollectReturnStatus'), ('RegisteredUsers'), ('JobStatus')) AS expected(name)
+                WHERE name NOT IN (SELECT name FROM sys.tables)
+                UNION ALL
+                SELECT 'AddChangedCollectReturnStatus'
+                WHERE NOT EXISTS (SELECT 1 FROM sys.procedures WHERE name = 'AddChangedCollectReturnStatus');")
+          if [ -n "$missing" ]; then
+            echo "Missing from the image: $missing" >&2
+            exit 1
+          fi
+          echo "All expected tables and procedures are present"
+
+      - name: Stop the image
+        if: ${{ always() }}
+        run: docker rm --force ledger-database
+
+      - name: Log in to GHCR
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          tags="${{ steps.meta.outputs.tags }}"
+          if [ -z "$tags" ]; then
+            echo "No tags were generated, so there is nothing to push" >&2
+            exit 1
+          fi
+          for tag in $tags; do
+            docker tag ${{ env.LOCAL_TAG }} "$tag"
+            docker push "$tag"
+          done
