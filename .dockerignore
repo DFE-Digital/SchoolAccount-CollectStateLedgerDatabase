@@ -2,7 +2,7 @@
 .github/
 .idea/
 README.md
-docker-compose.yml
+docker-compose*.yml
 scripts/
 
 # Local development only, and untracked, so it would otherwise make a local build
