@@ -2,6 +2,7 @@ services:
   ledger-database:
     build: .
     image: ledger-database:ci
+    platform: linux/amd64
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-MyStrongPassword123!}
     ports:
