@@ -3,7 +3,6 @@
 .idea/
 README.md
 docker-compose*.yml
-scripts/
 
 # Local development only, and untracked, so it would otherwise make a local build
 # of this image differ from the one CI builds.
