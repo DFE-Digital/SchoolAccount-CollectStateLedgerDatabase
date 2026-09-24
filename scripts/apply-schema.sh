@@ -1,7 +1,6 @@
 #!/bin/bash
 # Waits for SQL Server to accept connections, then applies the CollectStateLedger
-# scripts in order. This is the only place that knows what they are called and what
-# order they go in.
+# scripts in order.
 set -euo pipefail
 
 readonly SERVER="${MSSQL_SERVER:-host.docker.internal}"
@@ -15,7 +14,6 @@ if [[ -z "${MSSQL_PASSWORD:-}" ]]; then
     exit 1
 fi
 
-# tools18 ships in the server image, tools in the mssql-tools image.
 SQLCMD=
 for candidate in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
     if [[ -x "$candidate" ]]; then
