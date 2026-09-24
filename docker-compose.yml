@@ -1,12 +1,9 @@
 services:
-  sqlserver-init-db:
-    image: mcr.microsoft.com/mssql-tools:latest
+  ledger-database:
+    build: .
+    image: ledger-database:ci
     platform: linux/amd64
     environment:
-      - MSSQL_USER=${MSSQL_USER-sa}
-      - MSSQL_PASSWORD=${MSSQL_PASSWORD-MyStrongPassword123!}
-    command: /scripts/configure-db.sh
-    volumes:
-      - ./sql:/sql
-      - ./scripts:/scripts
-    restart: "no"      
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-MyStrongPassword123!}
+    ports:
+      - "${LEDGER_DATABASE_PORT:-14330}:1433"

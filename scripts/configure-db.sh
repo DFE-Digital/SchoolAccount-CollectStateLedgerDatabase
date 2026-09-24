@@ -1,27 +1,50 @@
 #!/bin/bash
+# Waits for SQL Server to accept connections, then applies the CollectStateLedger
+# scripts in order.
+set -euo pipefail
 
-TRIES=60
-DB_STATUS=1
-i=0
+readonly SERVER="${MSSQL_SERVER:-host.docker.internal}"
+readonly USERNAME="${MSSQL_USER:-sa}"
+readonly SQL_DIR="${SQL_DIR:-/sql}"
+readonly WAIT_SECONDS="${MSSQL_WAIT_SECONDS:-60}"
+readonly SCRIPTS=(database tables stored-procedures)
 
-while [[ $DB_STATUS -ne 0 ]] && [[ $i -lt $TRIES ]]; do
-	i=$((i+1))
-	DB_STATUS=$(/opt/mssql-tools/bin/sqlcmd -h -1 -t 1 -S host.docker.internal -U "$MSSQL_USER" -P "$MSSQL_PASSWORD" -C -Q "SET NOCOUNT ON; Select COALESCE(SUM(state), 0) from sys.databases") || DB_STATUS=1
-	echo "Waiting for database to be ready..."
-	sleep 1s
-done
-
-if [[ $DB_STATUS -ne 0 ]]; then 
-	echo "SQL Server took more than $TRIES seconds to start up or one or more databases are not in an ONLINE state"
-	exit 1
+if [[ -z "${MSSQL_PASSWORD:-}" ]]; then
+    echo "MSSQL_PASSWORD is not set" >&2
+    exit 1
 fi
 
-# Run the setup script to create the DB and the schema in the DB
-echo "Running configuration script..."
+SQLCMD=
+for candidate in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
+    if [[ -x "$candidate" ]]; then
+        SQLCMD="$candidate"
+        break
+    fi
+done
 
+if [[ -z "$SQLCMD" ]]; then
+    echo "No sqlcmd found" >&2
+    exit 1
+fi
 
-/opt/mssql-tools/bin/sqlcmd -S host.docker.internal -U "$MSSQL_USER" -P "$MSSQL_PASSWORD" -C -d master -i /sql/database.sql
-/opt/mssql-tools/bin/sqlcmd -S host.docker.internal -U "$MSSQL_USER" -P "$MSSQL_PASSWORD" -C -d master -i /sql/tables.sql
-/opt/mssql-tools/bin/sqlcmd -S host.docker.internal -U "$MSSQL_USER" -P "$MSSQL_PASSWORD" -C -d master -i /sql/stored-procedures.sql
+echo "Waiting for SQL Server on ${SERVER}..."
+ready=false
+for (( second = 0; second < WAIT_SECONDS; second++ )); do
+    if "$SQLCMD" -C -t 1 -S "$SERVER" -U "$USERNAME" -P "$MSSQL_PASSWORD" -Q "SELECT 1" > /dev/null 2>&1; then
+        ready=true
+        break
+    fi
+    sleep 1
+done
 
-echo "Configuration completed."
+if [[ "$ready" != true ]]; then
+    echo "SQL Server on ${SERVER} did not become available within ${WAIT_SECONDS}s" >&2
+    exit 1
+fi
+
+for script in "${SCRIPTS[@]}"; do
+    echo "Applying ${script}.sql"
+    "$SQLCMD" -C -b -S "$SERVER" -U "$USERNAME" -P "$MSSQL_PASSWORD" -d master -i "${SQL_DIR}/${script}.sql"
+done
+
+echo "Schema applied."

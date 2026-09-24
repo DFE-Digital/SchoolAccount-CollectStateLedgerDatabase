@@ -1,0 +1,9 @@
+.git/
+.github/
+.idea/
+README.md
+docker-compose*.yml
+
+# Local development only, and untracked, so it would otherwise make a local build
+# of this image differ from the one CI builds.
+sql/dev-seed-history.sql
