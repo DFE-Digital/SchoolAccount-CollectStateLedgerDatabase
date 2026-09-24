@@ -21,7 +21,7 @@ MSSQL_USER=sa \
 MSSQL_PASSWORD="$MSSQL_SA_PASSWORD" \
 SQL_DIR=/schema/sql \
 MSSQL_WAIT_SECONDS="${SCHEMA_WAIT_SECONDS:-180}" \
-    /schema/scripts/apply-schema.sh
+    /schema/scripts/configure-db.sh
 
 touch "$READY_FILE"
 

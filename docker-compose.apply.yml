@@ -5,7 +5,7 @@ services:
     environment:
       - MSSQL_USER=${MSSQL_USER-sa}
       - MSSQL_PASSWORD=${MSSQL_PASSWORD-MyStrongPassword123!}
-    command: /scripts/apply-schema.sh
+    command: /scripts/configure-db.sh
     volumes:
       - ./sql:/sql
       - ./scripts:/scripts
