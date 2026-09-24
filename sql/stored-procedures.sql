@@ -15,7 +15,7 @@ WHERE DCBladeSQLDatabase = @DCBladeSQLDatabase
 
 IF @DCID IS NULL
 BEGIN
-    RAISERROR('No DataCollection record found for census: %s', 16, 1, @DCBladeSQLDatabase)
+    PRINT 'No DataCollection record found for census: ' + ISNULL(@DCBladeSQLDatabase, 'NULL')
     RETURN
 END
     
