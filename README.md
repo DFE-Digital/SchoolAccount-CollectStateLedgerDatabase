@@ -5,6 +5,14 @@ status changes in the `CollectStateLedger` database.
 
 # Local development
 
+---
+
+| Software       | Command                                                                                               |
+|----------------|-------------------------------------------------------------------------------------------------------|
+| Docker Desktop | Follow the [official macos install guide](https://docs.docker.com/desktop/setup/install/mac-install/) |
+
+---
+
 ## Running the ledger on its own
 
 [docker-compose.yml](./docker-compose.yml) builds an image of SQL Server with the schema already
