@@ -3,6 +3,62 @@
 This repository contains migration scripts and a stored procedure to track COLLECT data return
 status changes in the `CollectStateLedger` database.
 
+# Local development
+
+---
+
+| Software       | Command                                                                                               |
+|----------------|-------------------------------------------------------------------------------------------------------|
+| Docker Desktop | Follow the [official macos install guide](https://docs.docker.com/desktop/setup/install/mac-install/) |
+
+---
+
+## Running the ledger on its own
+
+[docker-compose.yml](./docker-compose.yml) builds an image of SQL Server with the schema already
+applied and brings it up:
+```
+docker compose up --build --wait
+```
+
+It publishes on port `14330` rather than `1433`, so it does not collide with the SQL Server that
+[SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) runs.
+Override it with `LEDGER_DATABASE_PORT`.
+
+The image contains no `COLLECTPortal`, so the stored procedure is created but has nothing to read.
+This is for consumers that only read the ledger, and it is what the build workflow publishes to
+GHCR.
+
+## Applying the scripts to a server you already have
+
+[docker-compose.apply.yml](./docker-compose.apply.yml) runs the migrations against a database that
+is already running on the standard SQL server port of `1433`. That is the one to use alongside
+`COLLECTPortal` which can be started from [SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools), 
+since it is the only setup where the stored procedure can actually run.
+
+The default SQL user and password are set to the standard School Account development SQL
+credentials.
+
+Executing the following command from the project root will run the migration:
+```
+docker compose -f docker-compose.apply.yml up
+```
+
+The following SQL demonstrates running the stored procedure `AddChangedCollectReturnStatus` against
+the `SchoolCensus2025_Spring` collection, running this will add data to the StateLedgerDatabase:
+```sql
+DECLARE @RC int 
+EXECUTE @RC = [dbo].[AddChangedCollectReturnStatus] 'SchoolCensus2025_Spring'
+```
+When running locally this updates 22,000 rows in 0.35 seconds.
+
+The SQL credentials may be overridden by adding a `.env` file to the project root with the following
+contents, substituting `my-db-user` and `my-db-password` with the required values:
+```
+MSSQL_USER=my-db-user
+MSSQL_PASSWORD=my-db-password
+```
+
 # Database and Schema
 
 The database `CollectStateLedger` should be available alongside the `COLLECTPortal` database in
@@ -49,51 +105,6 @@ Although only the `LAEStab`, `ReturnStatus`, `DCID`, `Errors`, `Queries`, `OKdEr
 by the consuming service.
 
 At present there are no additional indexes on the table to improve performance.
-
-The following SQL demonstrates running the stored procedure `AddChangedCollectReturnStatus` against
-the `SchoolCensus2025_Spring` collection:
-```sql
-DECLARE @RC int 
-EXECUTE @RC = [dbo].[AddChangedCollectReturnStatus] 'SchoolCensus2025_Spring'
-```
-When running locally this updates 22,000 rows in 0.35 seconds.
-
-# Local development
-
-## Running the ledger on its own
-
-[docker-compose.yml](./docker-compose.yml) builds an image of SQL Server with the schema already
-applied and brings it up:
-```
-docker compose up --build --wait
-```
-
-It publishes on port `14330` rather than `1433`, so it does not collide with the SQL Server that
-[SchoolAccount-LocalDevTools](https://github.com/DFE-Digital/SchoolAccount-LocalDevTools) runs.
-Override it with `LEDGER_DATABASE_PORT`.
-
-The image contains no `COLLECTPortal`, so the stored procedure is created but has nothing to read.
-This is for consumers that only read the ledger, and it is what the build workflow publishes to
-GHCR.
-
-## Applying the scripts to a server you already have
-
-[docker-compose.apply.yml](./docker-compose.apply.yml) runs the migrations against a database that
-is already running on the standard SQL server port of `1433`. That is the one to use alongside
-`COLLECTPortal`, since it is the only setup where the stored procedure can actually run.
-
-The default SQL user and password are set to the standard School Account development SQL
-credentials. These may be overridden by adding a `.env` file to the project root with the following
-contents, substituting `db-user` and `my-db-password` with the required values:
-```
-MSSQL_USER=my-db-user
-MSSQL_PASSWORD=my-db-password
-```
-
-Executing the following command from the project root will run the migration:
-```
-docker compose -f docker-compose.apply.yml up
-```
 
 # Further Information
 
